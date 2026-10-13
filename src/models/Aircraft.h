@@ -27,6 +27,9 @@ struct Aircraft {
     bool   spi;             // [15] special purpose indicator flag
     int    positionSource;  // [16] 0=ADS-B, 1=ASTERIX, 2=MLAT, 3=FLARM
     int    category;        // [17] aircraft category (0=unknown, see docs for full list)
+    bool   hasVelocity = false;
+    bool   hasBaroAltitude = false;
+    bool   hasTrueTrack = false;
 };
 
 namespace JsonParser {
