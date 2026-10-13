@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include "AircraftInfo.h"
 
 #include "models/TrackedAircraft.h"
 #include "ConfigurationWebServer.h"
@@ -16,6 +17,7 @@ private:
     std::map<String, TrackedAircraft> trackedAircraft;
 
     bool displayInfoText = true;
+    unsigned infoFields = DefaultAircraftInfoFields;
     bool displayTriangles = true;
 
     unsigned long fetchInterval = 0;

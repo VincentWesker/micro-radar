@@ -23,6 +23,9 @@ namespace JsonParser {
         a.spi = state[15].isNull() ? false : state[15].as<bool>();
         a.positionSource = state[16].isNull() ? 0 : state[16].as<int>();
         a.category = state[17].isNull() ? 0 : state[17].as<int>();
+        a.hasVelocity = !state[9].isNull();
+        a.hasBaroAltitude = !state[7].isNull();
+        a.hasTrueTrack = !state[10].isNull();
 
         return a;
     }

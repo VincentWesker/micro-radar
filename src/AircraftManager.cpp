@@ -17,6 +17,16 @@ void AircraftManager::Initialise()
     const String renderTris = configServer.GetStoredString("triangle");
     if (!renderText.isEmpty()) displayInfoText = renderText == "true" ? true : false;
     if (!renderTris.isEmpty()) displayTriangles = renderTris == "true" ? true : false;
+    for (const auto& option : AircraftInfoOptions) {
+        const String enabled = configServer.GetStoredString(option.key);
+        if (enabled.isEmpty()) continue;
+        if (enabled == "true") infoFields |= option.field;
+        else infoFields &= ~option.field;
+    }
+    if (!IsValidAircraftInfoSelection(infoFields)) {
+        Serial.println("[WARN] Invalid aircraft info selection; using default fields.");
+        infoFields = DefaultAircraftInfoFields;
+    }
 
     // calculate how often we can call OpenSky API before being rate limited
     constexpr int MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -56,7 +66,8 @@ void AircraftManager::Update()
               {"lamin", String(lat - rad)},
               {"lamax", String(lat + rad)},
               {"lomin", String(lon - rad)},
-              {"lomax", String(lon + rad)}
+              {"lomax", String(lon + rad)},
+              {"extended", "1"}
             },
             headers
         );
@@ -144,9 +155,22 @@ void AircraftManager::DrawAircraftInfo(LGFX_Sprite& backbuffer, int x, int y, co
 
     backbuffer.setTextSize(1);
     backbuffer.setTextColor(lgfx::color888(0, 128, 0));
-    backbuffer.drawString(tracked.state.callsign, x + 5, y + 5);
-    backbuffer.drawString(String(tracked.state.velocity) + "m/s", x + 5, y + 5 + lineHeight);
-    backbuffer.drawString(String(tracked.state.baroAltitude) + "m", x + 5, y + 5 + lineHeight * 2);
+    int textY = y + 5;
+    const Aircraft& state = tracked.state;
+    for (const auto& option : AircraftInfoOptions) {
+        if (!(infoFields & option.field)) continue;
+        String text;
+        switch (option.field) {
+            case Callsign: text = state.callsign.isEmpty() ? "N/A" : state.callsign; break;
+            case Speed: text = state.hasVelocity ? String(state.velocity) + "m/s" : "N/A"; break;
+            case Altitude: text = state.hasBaroAltitude ? String(state.baroAltitude) + "m" : "N/A"; break;
+            case Country: text = state.originCountry.isEmpty() ? "N/A" : state.originCountry; break;
+            case Category: text = AircraftCategoryName(state.category); break;
+            case TrueTrack: text = state.hasTrueTrack ? String(state.trueTrack) + "deg" : "N/A"; break;
+        }
+        backbuffer.drawString(text, x + 5, textY);
+        textY += lineHeight;
+    }
 }
 
 void AircraftManager::DrawAircraftTriangle(LGFX_Sprite& backbuffer, int x, int y, const TrackedAircraft& tracked) const

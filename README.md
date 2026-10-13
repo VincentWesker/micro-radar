@@ -174,8 +174,10 @@ Once connected to your network, the radar config is accessible at [http://micror
 Here you can set:
 
 - **Location** (latitude and longitude): the centre point of your radar
-- **Radar radius**: how wide the scan extends (in degrees, 2 degrees is the limit to avoid rate limiting)
+- **Radar radius**: how wide the scan extends, in degrees; the maximum is just under 2.5 degrees (about 278 km north/south each way). Larger areas can include more aircraft, increasing ESP32 memory use and download/rendering time. Use a smaller radius to reduce load.
+- **Kilometre estimate**: below the radius, a live browser-side calculation shows the approximate north/south and east/west reach from your location. One degree is about 111.3 km north/south; east/west reach varies with latitude. The scan covers a rectangle, not a circle.
 - **Display options**: toggle visual elements
+- **Aircraft info fields**: select up to three of callsign, ground speed (m/s), barometric altitude (m), origin country, aircraft category, and true track (degrees clockwise from north). Callsign, speed, and altitude are selected by default. The Aircraft Info toggle shows or hides the selected fields without clearing your selection. Missing values appear as `N/A`, and unavailable categories as `Unknown` or `Unspecified`. Origin country is inferred from the transponder address, not the departure country.
 - **OpenSky credentials**: your client ID and secret (if you've made an account - again, highly recommend!)
 
 <img width="400" alt="image" src="https://github.com/user-attachments/assets/45e6219c-2672-4197-baad-16ae08180b58" />
