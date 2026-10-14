@@ -191,6 +191,110 @@ That's it! Once you've configured everything, you should see a live view of all 
 
 <img width="400" alt="IMG_7935" src="https://github.com/user-attachments/assets/118b9a1c-c2c0-488d-b638-d8684a30b1d7" />
 
+### Display REST controls
+
+The configuration page has a separate **Live display controls** section with
+**Turn on**, **Turn off**, and **Apply brightness** controls. These use the same
+REST endpoints below without saving the configuration or restarting the device.
+The page shows the requested state, not a hardware acknowledgement. Reload it
+to refresh settings changed by another controller.
+
+The existing web server accepts these commands while the radar is connected to WiFi.
+Use `microradar.local` or the device's IP address:
+
+```sh
+curl -X PUT http://microradar.local/api/display/off
+curl -X PUT http://microradar.local/api/display/on
+curl -X PUT "http://microradar.local/api/display/brightness?value=128"
+```
+
+Brightness accepts whole numbers from **0** (dark) to **255** (full brightness).
+Missing or invalid values return HTTP **400** without changing the brightness.
+Valid commands return HTTP **202** and apply on the next main-loop iteration;
+an ongoing network request can delay the change. Repeating a command is safe.
+
+Off turns off the backlight and calls `tft.sleep()` to put the display panel to
+sleep. Drawing and aircraft updates (including OpenSky requests) are paused,
+but the ESP32, WiFi, and web server keep running so the on command remains reachable.
+On calls `tft.wakeup()`, resumes aircraft updates and drawing, and restores the
+selected brightness. Polling resumes on the existing schedule: if a fetch is
+already due, it runs on the first awake iteration. An in-flight request is not cancelled.
+Setting brightness while off updates the level to restore without turning the display on;
+if that level is 0, the screen stays dark until a nonzero brightness is selected.
+These controls are temporary: rebooting restores on at brightness 255.
+
+Like the configuration server, these endpoints have no authentication. Use them
+only on a trusted local network; do not expose the device to the internet.
+
+#### Integrating with scripts
+
+Send an HTTP `PUT` to the device on port 80; no body or authentication is required.
+Brightness is a query parameter, not JSON. HTTP `202` means the command was
+accepted, not that the screen has already changed. HTTP `400` means the brightness
+value was rejected. Other HTTP errors or network failures should be reported by
+your controller; retries are safe because commands set a state rather than toggle it.
+
+For example, from a shell script (use `curl.exe` in Windows PowerShell):
+
+```sh
+curl --fail-with-body --show-error -X PUT "http://192.168.1.50/api/display/off"
+curl --fail-with-body --show-error -X PUT "http://192.168.1.50/api/display/brightness?value=96"
+curl --fail-with-body --show-error -X PUT "http://192.168.1.50/api/display/on"
+```
+
+Replace `192.168.1.50` with your radar's IP. A DHCP reservation is useful for
+automation hosts that cannot resolve `microradar.local`. Brightness 0 only darkens
+the backlight; use `/off` to sleep the panel and pause aircraft polling.
+
+#### Integrating with Home Assistant
+
+Add these commands to Home Assistant's `configuration.yaml` (merge into an
+existing `rest_command:` section if present), replace the IP, and reload REST
+commands or restart Home Assistant:
+
+```yaml
+rest_command:
+  microradar_display_on:
+    url: "http://192.168.1.50/api/display/on"
+    method: PUT
+  microradar_display_off:
+    url: "http://192.168.1.50/api/display/off"
+    method: PUT
+  microradar_display_brightness:
+    url: "http://192.168.1.50/api/display/brightness?value={{ brightness | string | urlencode }}"
+    method: PUT
+```
+
+Use the commands as automation actions or run them from **Developer Tools > Actions**:
+
+```yaml
+action: rest_command.microradar_display_brightness
+data:
+  brightness: 128
+```
+
+For a nightly schedule, add these entries to `automations.yaml` (or create
+equivalent time-triggered automations in the UI):
+
+```yaml
+- alias: "Micro Radar - screen off at night"
+  triggers:
+    - trigger: time
+      at: "23:00:00"
+  actions:
+    - action: rest_command.microradar_display_off
+- alias: "Micro Radar - screen on in the morning"
+  triggers:
+    - trigger: time
+      at: "07:00:00"
+  actions:
+    - action: rest_command.microradar_display_on
+```
+
+These commands do not create a switch/light entity or synchronize its state.
+After a radar reboot, it starts on at full brightness; reapply your desired
+commands if your automation needs a different startup state.
+
 ## FAQ
 
 > the port is busy or doesn't exist
