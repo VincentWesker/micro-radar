@@ -9,6 +9,7 @@
 #include "OpenSkyAuthTokenHandler.h"
 #include "AircraftManager.h"
 #include "DrawHelpers.h"
+#include "DisplayRotation.h"
 #include "models/Aircraft.h"
 #include "models/TrackedAircraft.h"
 
@@ -21,6 +22,7 @@ constexpr int SCREEN_SIZE_DIV_2 = (SCREEN_SIZE / 2);
 
 LGFX tft;
 LGFX_Sprite backbuffer(&tft);
+int displayRotation = 0;
 
 WiFiManager wm;
 ConfigurationWebServer configServer;
@@ -43,12 +45,19 @@ void setup()
   backbuffer.setColorDepth(8);
   backbuffer.createSprite(SCREEN_SIZE, SCREEN_SIZE);
 
+  const String storedRotation = configServer.GetStoredString("rotation");
+  if (!storedRotation.isEmpty() && !ParseDisplayRotation(storedRotation.c_str(), displayRotation)) {
+    Serial.println("[WARN] Invalid stored display rotation; using 0 degrees.");
+  }
+
   // establish WiFi connection
   tft.fillScreen(lgfx::color888(0, 0, 0));
-  tft.setTextColor(lgfx::color888(0, 255, 0));
-  tft.drawCentreString("Connecting to WiFi...", SCREEN_SIZE / 2, SCREEN_SIZE / 2);
+  backbuffer.fillScreen(lgfx::color888(0, 0, 0));
+  backbuffer.setTextColor(lgfx::color888(0, 255, 0));
+  backbuffer.drawCentreString("Connecting to WiFi...", SCREEN_SIZE / 2, SCREEN_SIZE / 2);
+  PushDisplayFrame(backbuffer, displayRotation);
 
-  WiFiManagerHelpers::ConfigureWiFiManager(wm, tft);
+  WiFiManagerHelpers::ConfigureWiFiManager(wm, backbuffer, displayRotation);
 
   if (strlen(preconfiguredWifiSsid) > 0) {
     WiFi.begin(preconfiguredWifiSsid, preconfiguredWifiPassword);
@@ -83,6 +92,5 @@ void loop()
   }
 
   aircraftManager.Draw(backbuffer);
-  backbuffer.pushSprite(0, 0);
+  PushDisplayFrame(backbuffer, displayRotation);
 }
-
