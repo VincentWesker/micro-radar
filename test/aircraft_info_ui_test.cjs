@@ -25,12 +25,14 @@ function createPage(latitude = 51.5, radius = 1) {
         addEventListener(event, handler) { this.input = handler; }
     };
     const form = { addEventListener(event, handler) { this.submit = handler; } };
+    const displayControl = { addEventListener() {} };
     let saves = 0;
     vm.runInNewContext(script, {
         document: {
             querySelectorAll: () => fields,
             querySelector: selector => selector === 'input[name="latitude"]' ? latitudeInput : radiusInput,
-            getElementById: id => id === 'cfg' ? form : id === 'radius-distance' ? distance : result
+            getElementById: id => id.startsWith('display-') ? displayControl :
+                id === 'cfg' ? form : id === 'radius-distance' ? distance : result
         },
         FormData: class {},
         fetch: () => { ++saves; return Promise.resolve({ text: () => 'Saved' }); }

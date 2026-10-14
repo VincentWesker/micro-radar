@@ -39,8 +39,7 @@ void setup()
   // initialise LGFX + screen
   tft.init();
   tft.invertDisplay(true);
-  pinMode(3, OUTPUT);
-  digitalWrite(3, HIGH);
+  tft.setBrightness(configServer.GetDisplayBrightness());
 
   backbuffer.setColorDepth(8);
   backbuffer.createSprite(SCREEN_SIZE, SCREEN_SIZE);
@@ -75,6 +74,27 @@ void setup()
 
 void loop()
 {
+  // Apply async API requests here so display access stays on the drawing task.
+  static bool displayAwake = true;
+  const bool displayEnabled = configServer.IsDisplayEnabled();
+  if (displayEnabled != displayAwake) {
+    if (displayEnabled) {
+      tft.wakeup();
+    } else {
+      tft.setBrightness(0);
+      tft.sleep();
+    }
+    displayAwake = displayEnabled;
+  }
+
+  if (!displayAwake) {
+    delay(10);
+    return;
+  }
+
+  const uint8_t brightness = configServer.GetDisplayBrightness();
+  if (tft.getBrightness() != brightness) tft.setBrightness(brightness);
+
   aircraftManager.Update();
 
   // draw cycle
