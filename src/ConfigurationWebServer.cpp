@@ -255,7 +255,7 @@ void ConfigurationWebServer::Initialise() {
 
         const auto* rotationParam = request->getParam("rotation", true);
         int rotation = 0;
-        if (rotationParam && !ParseDisplayRotation(rotationParam->value().c_str(), rotation)) {
+        if (!rotationParam || !ParseDisplayRotation(rotationParam->value().c_str(), rotation)) {
             Serial.println("[WARN] Rejected invalid display rotation.");
             request->send(400, "text/plain", "Display rotation must be a whole number from -180 to 180 degrees. Settings were not saved.");
             return;
@@ -286,7 +286,7 @@ void ConfigurationWebServer::Initialise() {
         TrySaveParam("latitude");
         TrySaveParam("longitude");
         TrySaveParam("radius");
-        if (rotationParam) prefs.putString("rotation", String(rotation));
+        prefs.putString("rotation", String(rotation));
         TrySaveParam("opensky-id");
 
         const auto* param = request->getParam("opensky-secret", true);
