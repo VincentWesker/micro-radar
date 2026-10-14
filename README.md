@@ -216,8 +216,8 @@ an ongoing network request can delay the change. Repeating a command is safe.
 Off turns off the backlight and calls `tft.sleep()` to put the display panel to
 sleep. Drawing and aircraft updates (including OpenSky requests) are paused,
 but the ESP32, WiFi, and web server keep running so the on command remains reachable.
-On calls `tft.wakeup()`, resumes aircraft updates and drawing, and restores the
-selected brightness. Polling resumes on the existing schedule: if a fetch is
+On calls `tft.wakeup()` and restores the selected brightness before aircraft
+updates and drawing resume. Polling resumes on the existing schedule: if a fetch is
 already due, it runs on the first awake iteration. An in-flight request is not cancelled.
 Setting brightness while off updates the level to restore without turning the display on;
 if that level is 0, the screen stays dark until a nonzero brightness is selected.

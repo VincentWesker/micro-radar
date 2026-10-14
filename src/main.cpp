@@ -92,6 +92,9 @@ void loop()
     return;
   }
 
+  const uint8_t brightness = configServer.GetDisplayBrightness();
+  if (tft.getBrightness() != brightness) tft.setBrightness(brightness);
+
   aircraftManager.Update();
 
   // draw cycle
@@ -110,7 +113,4 @@ void loop()
 
   aircraftManager.Draw(backbuffer);
   PushDisplayFrame(backbuffer, displayRotation);
-
-  const uint8_t brightness = configServer.GetDisplayBrightness();
-  if (tft.getBrightness() != brightness) tft.setBrightness(brightness);
 }
