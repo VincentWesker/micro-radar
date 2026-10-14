@@ -36,12 +36,11 @@ constexpr bool IsValidAircraftInfoSelection(unsigned fields) {
 
 constexpr const char* AircraftCategoryName(int category) {
     constexpr const char* names[] = {
-        "Unknown", "Unspecified", "Light", "Small", "Large",
-        "High vortex large", "Heavy", "High performance", "Rotorcraft",
-        "Glider / sailplane", "Lighter-than-air", "Parachutist",
-        "Ultralight", "Reserved", "UAV", "Space vehicle",
-        "Emergency vehicle", "Service vehicle", "Point obstacle",
-        "Cluster obstacle", "Line obstacle"
+        "Unknown", "No cat", "Light", "Small", "Large",
+        "Hi-vortex", "Heavy", "Hi-perf", "Rotorcraft",
+        "Glider", "LTA", "Skydiver",
+        "Ultralight", "Reserved", "UAV", "Space",
+        "Emergency", "Service", "Point obs", "Group obs", "Line obs"
     };
     return category >= 0 && category <= 20 ? names[category] : "Unknown";
 }
