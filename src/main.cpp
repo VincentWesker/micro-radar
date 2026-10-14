@@ -10,15 +10,13 @@
 #include "AircraftManager.h"
 #include "DrawHelpers.h"
 #include "DisplayRotation.h"
+#include "RadarGeometry.h"
 #include "models/Aircraft.h"
 #include "models/TrackedAircraft.h"
 
 // Optional hard-coded Wi-Fi credentials. Leave both blank to skip pre-baking them and use the setup hotspot instead.
 const char* preconfiguredWifiSsid = "";
 const char* preconfiguredWifiPassword = "";
-
-constexpr int SCREEN_SIZE = 240;
-constexpr int SCREEN_SIZE_DIV_2 = (SCREEN_SIZE / 2);
 
 LGFX tft;
 LGFX_Sprite backbuffer(&tft);
@@ -42,7 +40,7 @@ void setup()
   tft.setBrightness(configServer.GetDisplayBrightness());
 
   backbuffer.setColorDepth(8);
-  backbuffer.createSprite(SCREEN_SIZE, SCREEN_SIZE);
+  backbuffer.createSprite(RadarDisplay::ScreenSize, RadarDisplay::ScreenSize);
 
   const String storedRotation = configServer.GetStoredString("rotation");
   if (!storedRotation.isEmpty() && !ParseDisplayRotation(storedRotation.c_str(), displayRotation)) {
@@ -53,7 +51,7 @@ void setup()
   tft.fillScreen(lgfx::color888(0, 0, 0));
   backbuffer.fillScreen(lgfx::color888(0, 0, 0));
   backbuffer.setTextColor(lgfx::color888(0, 255, 0));
-  backbuffer.drawCentreString("Connecting to WiFi...", SCREEN_SIZE / 2, SCREEN_SIZE / 2);
+  backbuffer.drawCentreString("Connecting to WiFi...", RadarDisplay::ScreenSize / 2, RadarDisplay::ScreenSize / 2);
   PushDisplayFrame(backbuffer, displayRotation);
 
   WiFiManagerHelpers::ConfigureWiFiManager(wm, backbuffer, displayRotation);
@@ -102,11 +100,12 @@ void loop()
 
   String renderScanlines = configServer.GetStoredString("scanline");
   if (renderScanlines.isEmpty() || renderScanlines == "true") {
+    const float sweepAngle = millis() / 3000.0f;
     DrawScanLines(backbuffer,
-      SCREEN_SIZE_DIV_2 - 1,
-      SCREEN_SIZE_DIV_2 - 1,
-      SCREEN_SIZE_DIV_2 - 1 + (std::cos(millis() / 3000.0f) * SCREEN_SIZE_DIV_2),
-      SCREEN_SIZE_DIV_2 - 1 + (std::sin(millis() / 3000.0f) * SCREEN_SIZE_DIV_2),
+      RadarDisplay::Center,
+      RadarDisplay::Center,
+      RadarDisplay::Center + (std::cos(sweepAngle) * RadarDisplay::Radius),
+      RadarDisplay::Center + (std::sin(sweepAngle) * RadarDisplay::Radius),
       20, 128, 5
     );
   }
