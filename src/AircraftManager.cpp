@@ -1,5 +1,6 @@
 #include "AircraftManager.h"
 #include "RadarGeometry.h"
+#include "DisplayRotation.h"
 
 #include <ArduinoJson.h>
 
@@ -113,13 +114,23 @@ void AircraftManager::Draw(LGFX_Sprite& backbuffer)
         auto [predLat, predLon] = tracked.GetDisplayPosition();
         auto [x, y] = ProjectCoordinateToScreen(predLat, predLon);
 
-        if (displayInfoText)
-            DrawAircraftInfo(backbuffer, x, y, tracked);
-
         if (displayTriangles)
             DrawAircraftTriangle(backbuffer, x, y, tracked);
         else
             backbuffer.fillCircle(x, y, 3, lgfx::color888(0, 255, 0));
+    }
+}
+
+void AircraftManager::DrawInfo(int rotation) const
+{
+    if (!displayInfoText) return;
+
+    for (const auto& [icao, tracked] : trackedAircraft) {
+        if (tracked.state.onGround) continue;
+
+        const auto [lat, lon] = tracked.GetDisplayPosition();
+        const auto [x, y] = ProjectCoordinateToScreen(lat, lon);
+        DrawAircraftInfo(x, y, tracked, rotation);
     }
 }
 
@@ -150,13 +161,18 @@ std::pair<int, int> AircraftManager::ProjectCoordinateToScreen(float predLat, fl
     return { x, y };
 }
 
-void AircraftManager::DrawAircraftInfo(LGFX_Sprite& backbuffer, int x, int y, const TrackedAircraft& tracked) const
+void AircraftManager::DrawAircraftInfo(int x, int y, const TrackedAircraft& tracked, int rotation) const
 {
     const int lineHeight = tft.fontHeight() + 1;
 
-    backbuffer.setTextSize(1);
-    backbuffer.setTextColor(lgfx::color888(0, 128, 0));
-    int textY = y + 5;
+    const auto label = RotateDisplayPoint(
+        x + 5, y + 5, rotation,
+        (RadarDisplay::ScreenSize - 1) / 2.0f,
+        (RadarDisplay::ScreenSize - 1) / 2.0f
+    );
+    tft.setTextSize(1);
+    tft.setTextColor(lgfx::color888(0, 128, 0));
+    int textY = label.y;
     const Aircraft& state = tracked.state;
     for (const auto& option : AircraftInfoOptions) {
         if (!(infoFields & option.field)) continue;
@@ -169,7 +185,7 @@ void AircraftManager::DrawAircraftInfo(LGFX_Sprite& backbuffer, int x, int y, co
             case Category: text = AircraftCategoryName(state.category); break;
             case TrueTrack: text = state.hasTrueTrack ? String(state.trueTrack) + "deg" : "N/A"; break;
         }
-        backbuffer.drawString(text, x + 5, textY);
+        tft.drawString(text, label.x, textY);
         textY += lineHeight;
     }
 }

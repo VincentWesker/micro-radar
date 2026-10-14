@@ -50,11 +50,11 @@ void setup()
   // establish WiFi connection
   tft.fillScreen(lgfx::color888(0, 0, 0));
   backbuffer.fillScreen(lgfx::color888(0, 0, 0));
-  backbuffer.setTextColor(lgfx::color888(0, 255, 0));
-  backbuffer.drawCentreString("Connecting to WiFi...", RadarDisplay::ScreenSize / 2, RadarDisplay::ScreenSize / 2);
   PushDisplayFrame(backbuffer, displayRotation);
+  tft.setTextColor(lgfx::color888(0, 255, 0));
+  tft.drawCentreString("Connecting to WiFi...", RadarDisplay::ScreenSize / 2, RadarDisplay::ScreenSize / 2);
 
-  WiFiManagerHelpers::ConfigureWiFiManager(wm, backbuffer, displayRotation);
+  WiFiManagerHelpers::ConfigureWiFiManager(wm, backbuffer, tft, displayRotation);
 
   if (strlen(preconfiguredWifiSsid) > 0) {
     WiFi.begin(preconfiguredWifiSsid, preconfiguredWifiPassword);
@@ -112,4 +112,5 @@ void loop()
 
   aircraftManager.Draw(backbuffer);
   PushDisplayFrame(backbuffer, displayRotation);
+  aircraftManager.DrawInfo(displayRotation);
 }

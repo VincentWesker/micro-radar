@@ -40,3 +40,10 @@ static_assert(CheckRotation(" 12", false), "Reject leading whitespace");
 static_assert(CheckRotation("12 ", false), "Reject trailing whitespace");
 static_assert(CheckRotation("--1", false), "Reject repeated signs");
 static_assert(CheckRotation("99999999999999999999999999999", false), "Reject overflow");
+
+constexpr auto ClockwisePoint = RotateDisplayPoint(110, 100, 90, 100, 100);
+static_assert(ClockwisePoint.x == 100 && ClockwisePoint.y == 110, "Rotate labels clockwise with the frame");
+constexpr auto CounterclockwisePoint = RotateDisplayPoint(110, 100, -90, 100, 100);
+static_assert(CounterclockwisePoint.x == 100 && CounterclockwisePoint.y == 90, "Rotate labels counterclockwise with the frame");
+constexpr auto UnchangedPoint = RotateDisplayPoint(110, 100, 0, 100, 100);
+static_assert(UnchangedPoint.x == 110 && UnchangedPoint.y == 100, "Keep labels in place without rotation");
