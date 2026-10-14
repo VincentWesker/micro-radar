@@ -26,21 +26,23 @@ void DrawScanLines(LGFX_Sprite& buf, const int x0, const int y0, const float x1,
     const float sweepAngle = std::atan2(dy, dx);
     const float trailAngle = (thickness * spacing) / radius;
 
+    // Filled wedges keep the fading trail solid all the way to the border ring.
+    int prevX = std::lround(x0 + std::cos(sweepAngle - trailAngle) * radius);
+    int prevY = std::lround(y0 + std::sin(sweepAngle - trailAngle) * radius);
     for (int i = 0; i < thickness; ++i) {
         const float progress = (i + 1) / static_cast<float>(thickness);
         const float angle = sweepAngle - trailAngle * (1.0f - progress);
         const int brightness = static_cast<int>(progress * trailBrightness);
+        const int x = std::lround(x0 + std::cos(angle) * radius);
+        const int y = std::lround(y0 + std::sin(angle) * radius);
 
-        buf.drawLine(
-            x0, y0,
-            x0 + std::cos(angle) * radius,
-            y0 + std::sin(angle) * radius,
-            lgfx::color888(0, brightness, 0)
-        );
+        buf.fillTriangle(x0, y0, prevX, prevY, x, y, lgfx::color888(0, brightness, 0));
+        prevX = x;
+        prevY = y;
     }
 
     buf.drawLine(
-        x0, y0, x1, y1,
+        x0, y0, std::lround(x1), std::lround(y1),
         lgfx::color888(0, 220, 0)
     );
 }

@@ -33,6 +33,7 @@ public:
         {
             auto cfg = _light.config();
             cfg.pin_bl = 3;
+            cfg.pwm_channel = 0; // ESP32-C3 has channels 0-5; LovyanGFX defaults to 7.
             cfg.invert = false;
             _light.config(cfg);
             _panel.setLight(&_light);
