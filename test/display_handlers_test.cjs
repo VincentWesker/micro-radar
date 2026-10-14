@@ -4,6 +4,18 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { test } = require('node:test');
 
+test('backlight PWM explicitly uses a supported ESP32-C3 channel', () => {
+    const root = path.join(__dirname, '..');
+    const source = fs.readFileSync(path.join(root, 'include', 'LGFX.h'), 'utf8');
+    const lightConfig = source.match(/auto cfg = _light\.config\(\);([\s\S]*?)_light\.config\(cfg\);/);
+    assert.ok(lightConfig, 'Find the backlight configuration');
+    const channel = lightConfig[1].match(/cfg\.pwm_channel\s*=\s*(\d+)\s*;/);
+    assert.ok(channel, 'Override LovyanGFX default channel 7, which is invalid on ESP32-C3');
+    assert.ok(Number(channel[1]) < 6, 'ESP32-C3 supports PWM channels 0 through 5');
+    assert.match(lightConfig[1], /cfg\.pin_bl\s*=\s*3\s*;/, 'Keep the board backlight pin');
+    assert.match(source, /_panel\.setLight\(&_light\)/, 'Attach the configured backlight to the panel');
+});
+
 test('registered display handlers validate requests and update only the requested state', () => {
     const root = path.join(__dirname, '..');
     const source = fs.readFileSync(path.join(root, 'src', 'ConfigurationWebServer.cpp'), 'utf8').replace(/\r\n/g, '\n');
